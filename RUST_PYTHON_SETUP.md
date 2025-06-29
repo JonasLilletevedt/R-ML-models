@@ -18,6 +18,8 @@
 3.  **Build Python Module:**
     *   Use `maturin develop` (for development) or `maturin build --release` (for distribution) to compile and install.
 4.  **Python Wrapper:**
+    *   Refer to the documentation to modify the template for your own scikit-learn contribution: https://contrib.scikit-learn.org/project-template
     *   Create a Scikit-learn-compatible Python class (inheriting from `BaseEstimator` and `ClassifierMixin`/`RegressorMixin`).
     *   This class will instantiate and call our Rust model's methods.
+      
   

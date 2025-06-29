@@ -31,5 +31,6 @@ This heuristic-based approach introduces several critical design considerations 
     *   **Challenge:** Reliance on a single "most predictive" feature (or a few) for filtering inherently assumes a relatively linear or simple relationship. What if the true nearest neighbors are only "close" through complex, non-linear interactions across many features?
     *   **Impact:** Such a filter risks discarding the *true* nearest neighbors, leading to a direct decrease in model accuracy. This is a fundamental trade-off for any Approximate Nearest Neighbor (ANN) method.
     *   **Future Work/Open Question:** This is an area requiring careful validation. We need to quantify the accuracy degradation and assess its acceptability based on the specific application's requirements for speed versus precision.
+    *   **For Know Solution:** Test the standard KNN-model against the *efficient KNN-model** on a small subset of the original dataset. Compare the two solutions to see if the *heuristic more efficient model* is appropiate for the current dataset.
 
 This exploration aims to move beyond standard library usage to delve into the practicalities of performance optimization in machine learning, understanding its implications for model accuracy and reliability.

@@ -20,6 +20,6 @@
 4.  **Python Wrapper:**
     *   Create a Scikit-learn-compatible Python class (inheriting from `BaseEstimator` and `ClassifierMixin`/`RegressorMixin`).
     *   This class will instantiate and call our Rust model's methods.
-    *   **Usefull:** (*Refer to the documentation to modify the template for your own scikit-learn contribution: https://contrib.scikit-learn.org/project-template*, https://github.com/scikit-learn-contrib/project-template/)
+    *   **Usefull:** (*Refer to the documentation to modify the template for your own scikit-learn contribution: https://contrib.scikit-learn.org/project-template*, from https://github.com/scikit-learn-contrib/project-template/)
       
   

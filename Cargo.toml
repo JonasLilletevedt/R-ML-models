@@ -8,7 +8,7 @@ name = "Xmodels"
 crate-type = ["cdylib"]
 
 [dependencies]
+pyo3 = { version = "0.26.0", features = ["extension-module"] }
+numpy = { version = "0.26.0" }
 ndarray = "0.16.1"
-numpy = "0.26.0"
-pyo3 = "0.26.0"
-ndarray-stats = "0.5"
+ndarray-stats = "0.6.0"

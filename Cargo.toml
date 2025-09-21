@@ -1,0 +1,14 @@
+[package]
+name = "ml-from-scratch"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "Xmodels"
+crate-type = ["cdylib"]
+
+[dependencies]
+ndarray = "0.16.1"
+numpy = "0.26.0"
+pyo3 = "0.26.0"
+ndarray-stats = "0.5"

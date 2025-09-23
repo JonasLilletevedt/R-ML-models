@@ -1,5 +1,5 @@
 // Import libraries
-use ndarray::{Array1, Array2, ArrayView1, ArrayView2, Axis};
+use ndarray::{Array, Array1, Array2, ArrayView1, ArrayView2, Axis};
 use ndarray_stats::QuantileExt;
 use numpy::{PyArray1, PyArrayMethods, PyReadonlyArray, PyReadonlyArray1, PyReadonlyArray2};
 use pyo3::exceptions::{PyTypeError, PyValueError};
@@ -105,9 +105,12 @@ impl MyRustKNN {
     }
 
     fn calculate_distances(X_pred_view: ArrayView2<f64>, X_train_view: ArrayView2<f64>) -> Array2<f64> {
-        X_pred_view.map_axis(Axis(1), |pred_row| {
-            let diffs = &pred_row - &*X_train_view;
-            diffs.map_axis(Axis(1), |row| row.dot(&row))
-        })
+        let n_pred = X_pred_view.nrows();
+        let n_train = X_train_view.nrows();
+        let n_features = X_train_view.ncols(); 
+
+        let mut distances = Array::<f64>::zeros((n_pred, n_train));
+
+        return todo!()
     }
 }

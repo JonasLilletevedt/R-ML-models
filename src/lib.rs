@@ -3,10 +3,12 @@ use std::collections::btree_set::Difference;
 // Import libraries
 use ndarray::{Array, Array1, Array2, ArrayView1, ArrayView2, Axis};
 use ndarray_stats::QuantileExt;
-use numpy::{PyArray1, PyArrayMethods, PyReadonlyArray, PyReadonlyArray1, PyReadonlyArray2};
+use numpy::{
+    IntoPyArray, PyArray1, PyArrayMethods, PyReadonlyArray, PyReadonlyArray1, PyReadonlyArray2,
+};
 use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
-use pyo3::types::PyAny;
+use pyo3::types::{PyAny, PyList};
 
 #[pyclass]
 #[derive(Clone, Copy)]
@@ -48,7 +50,7 @@ impl MyRustKNN {
         Ok(())
     }
 
-    fn predict(&mut self, X_pred: PyReadonlyArray2<f64>) -> PyResult<PyObject> {
+    fn predict(&mut self, py: Python, X_pred: PyReadonlyArray2<f64>) -> PyResult<PyObject> {
         // Check if model have been fitted
         let (X_train, y_train) = match (&self.X, &self.y) {
             (Some(X), Some(y)) => (X, y),
@@ -63,10 +65,33 @@ impl MyRustKNN {
 
         let distances = calculate_distances(X_pred_view, X_train.view());
 
+        let mut pred_closest_rowi = Array2::<usize>::zeros((X_pred_view.nrows(), self.k));
+
+        for (i, row) in distances.axis_iter(Axis(0)).enumerate() {
+            let mut indexed_row: Vec<(f64, usize)> = row
+                .iter()
+                .enumerate()
+                .map(|(idx, &val)| (val, idx))
+                .collect();
+
+            indexed_row.select_nth_unstable_by(self.k, |a: &(f64, usize), b: &(f64, usize)| {
+                a.0.partial_cmp(&b.0).unwrap()
+            });
+
+            let k_smallest_indices: Vec<usize> =
+                indexed_row[..self.k].iter().map(|(_, idx)| *idx).collect();
+
+            pred_closest_rowi
+                .row_mut(i)
+                .assign(&Array1::from(k_smallest_indices));
+        }
+
         match y_train {
             Labels::Float(y_train_float) => {
-                let prediction = distances.
-                Err(PyValueError::new_err("Regression not yet implemented"))
+                let k_closest_results = pred_closest_rowi.mapv(|idx| y_train_float[idx]);
+                let row_means = k_closest_results.mean_axis(Axis(1)).unwrap();
+                let np_res = row_means.into_pyarray(py);
+                Ok(np_res.into())
             }
             Labels::Int(y_train_int) => {
                 // For classification, implement voting logic here
@@ -109,21 +134,24 @@ impl MyRustKNN {
 fn calculate_distances(X_pred_view: ArrayView2<f64>, X_train_view: ArrayView2<f64>) -> Array2<f64> {
     let n_pred = X_pred_view.nrows();
     let n_train = X_train_view.nrows();
-    let n_features = X_train_view.ncols();
 
-    let mut distances = Array::<f64, ndarray::Ix2>::zeros((n_pred, n_train));
+    let mut distances = Array2::<f64>::zeros((n_pred, n_train));
 
     for (i, pred_point) in X_pred_view.outer_iter().enumerate() {
-        let differences = &pred_point - &X_train_view;
-
-        let squared_differences = differences.mapv(|x| x.powi(2));
-
-        let sum_squared_diffs = squared_differences.sum_axis(Axis(1));
-
-        let final_distances = squared_differences.mapv(f64::sqrt);
-
-        distances.row_mut(i).assign(&final_distances);
+        // For each training point, compute the difference with pred_point
+        for (j, train_point) in X_train_view.outer_iter().enumerate() {
+            let diff = &pred_point - &train_point;
+            let distance = diff.mapv(|x| x.powi(2)).sum().sqrt();
+            distances[[i, j]] = distance;
+        }
     }
 
-    return distances;
+    distances
+}
+
+#[pymodule]
+fn Xmodels(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_class::<MyRustKNN>()?;
+    m.add_class::<Mode>()?;
+    Ok(())
 }

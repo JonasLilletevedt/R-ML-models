@@ -1,3 +1,5 @@
+use std::collections::btree_set::Difference;
+
 // Import libraries
 use ndarray::{Array, Array1, Array2, ArrayView1, ArrayView2, Axis};
 use ndarray_stats::QuantileExt;
@@ -59,13 +61,12 @@ impl MyRustKNN {
 
         let X_pred_view = X_pred.as_array();
 
-        let distances = self.calc
+        let distances = calculate_distances(X_pred_view, X_train.view());
 
         match y_train {
             Labels::Float(y_train_float) => {
-
-
-                Err(PyValueError::new_err("Classification not yet implemented"))
+                let prediction = distances.
+                Err(PyValueError::new_err("Regression not yet implemented"))
             }
             Labels::Int(y_train_int) => {
                 // For classification, implement voting logic here
@@ -103,14 +104,26 @@ impl MyRustKNN {
             }
         }
     }
+}
 
-    fn calculate_distances(X_pred_view: ArrayView2<f64>, X_train_view: ArrayView2<f64>) -> Array2<f64> {
-        let n_pred = X_pred_view.nrows();
-        let n_train = X_train_view.nrows();
-        let n_features = X_train_view.ncols(); 
+fn calculate_distances(X_pred_view: ArrayView2<f64>, X_train_view: ArrayView2<f64>) -> Array2<f64> {
+    let n_pred = X_pred_view.nrows();
+    let n_train = X_train_view.nrows();
+    let n_features = X_train_view.ncols();
 
-        let mut distances = Array::<f64>::zeros((n_pred, n_train));
+    let mut distances = Array::<f64, ndarray::Ix2>::zeros((n_pred, n_train));
 
-        return todo!()
+    for (i, pred_point) in X_pred_view.outer_iter().enumerate() {
+        let differences = &pred_point - &X_train_view;
+
+        let squared_differences = differences.mapv(|x| x.powi(2));
+
+        let sum_squared_diffs = squared_differences.sum_axis(Axis(1));
+
+        let final_distances = squared_differences.mapv(f64::sqrt);
+
+        distances.row_mut(i).assign(&final_distances);
     }
+
+    return distances;
 }

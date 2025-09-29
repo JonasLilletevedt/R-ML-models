@@ -1,4 +1,6 @@
+use std::collections::HashMap;
 use std::collections::btree_set::Difference;
+use std::hash::Hash;
 
 // Import libraries
 use ndarray::{Array, Array1, Array2, ArrayView1, ArrayView2, Axis};
@@ -95,7 +97,28 @@ impl MyRustKNN {
             }
             Labels::Int(y_train_int) => {
                 // For classification, implement voting logic here
-                Err(PyValueError::new_err("Classification not yet implemented"))
+                let k_closest_results = pred_closest_rowi.mapv(|idx| y_train_int[idx]);
+                let mut preds = Array1::<i64>::zeros(k_closest_results.nrows());
+                for (i, row) in k_closest_results.rows().into_iter().enumerate() {
+                    let mut frequencies: HashMap<i64, i64> = HashMap::new();
+
+                    for item in row.iter() {
+                        *frequencies.entry(item.clone()).or_insert(0) += 1;
+                    }
+
+                    let row_mode = frequencies
+                        .into_iter()
+                        .max_by_key(|&(_, count)| count)
+                        .map(|(val, _)| val); // row_mode is Option<&i64>
+
+                    if let Some(mode) = row_mode {
+                        preds[i] = mode;
+                    } else {
+                        preds[i] = -1;
+                    }
+                }
+                let np_res = preds.into_pyarray(py);
+                Ok(np_res.into())
             }
         }
     }

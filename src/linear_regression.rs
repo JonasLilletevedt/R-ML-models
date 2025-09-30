@@ -1,4 +1,4 @@
-use ndarray::{Array1, Array2, ArrayView2, Axis};
+use ndarray::{Array1, Array2, ArrayBase, ArrayView2, Axis};
 use numpy::{IntoPyArray, PyArray1, PyArrayMethods, PyReadonlyArray2};
 use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
@@ -13,6 +13,7 @@ pub struct MyRustLinearRegression {
     iterations: usize,
     base: ModelBase,
     weights: Array1<f64>,
+    bias: f64,
 }
 
 #[pymethods]
@@ -23,6 +24,7 @@ impl MyRustLinearRegression {
             iterations: (iterations),
             base: ModelBase::new(mode),
             weights: Array1::zeros(1), // Not worth the trouble to wrap in option, just start size to 1, not able to missuse due to it checking if fit before predict
+            bias: f64 = 0.0,
         }
     }
 
@@ -60,4 +62,17 @@ impl MyRustLinearRegression {
             }
         }
     }
+}
+
+fn make_loss_predictions(
+    X_train: &Array2<f64>,
+    y_train: &Array1<f64>,
+    weights: &Array1<f64>,
+    bias: &f64,
+) -> Array1<Mode> {
+    let y_loss_predictions: Array1<f64> = Array1::zeros(y_train.len());
+    for (i, (row_train, y_row)) in X_train.into_iter().zip(y_train.iter()).enumerate() {
+        let row_loss = (*y_row - (weights * *row_train + *bias)).pow2();
+    }
+    todo!()
 }

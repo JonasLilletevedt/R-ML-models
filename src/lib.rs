@@ -5,7 +5,6 @@ mod linear_regression;
 pub mod model_base;
 
 use knn::MyRustKNN;
-mod linear_regression;
 use model_base::Mode;
 
 #[pymodule]

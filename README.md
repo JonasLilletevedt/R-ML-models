@@ -34,7 +34,6 @@ let predictions = model.predict(&X_test);
 ### Python (via PyO3 bindings)
 
 ```python
-import importlib
 import Rmodels
 
 model = Rmodels.MyRustLinearRegression()

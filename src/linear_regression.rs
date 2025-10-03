@@ -3,8 +3,6 @@ use numpy::{IntoPyArray, PyArray1, PyArrayMethods, PyReadonlyArray2};
 use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
-use std::collections::HashMap;
-use std::mem::zeroed;
 
 use crate::model_base::{Labels, Mode, ModelBase};
 

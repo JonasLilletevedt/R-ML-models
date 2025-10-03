@@ -4,6 +4,11 @@ Do you really understand something if you cannot build it yourself? Maybe, maybe
 
 I often use machine learning algorithms via libraries, but rarely stop to think about how they work under the hood. This project is my way of building them from the ground up in Rust and truly understanding their mechanics.
 
+## Why Rust?
+
+Both C++ and Rust were considered because the goal was to build models that are **highly optimized and fast**.  
+Rust was chosen over C++ because it offers high performance **without requiring manual memory management**.
+
 ---
 
 ## Features Implemented
@@ -45,7 +50,7 @@ predictions = model.predict(X_test)
 ## Installation
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/JonasLilletevedt/R-ML-models
 cd Rmodels
 maturin develop
 ```

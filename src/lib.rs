@@ -9,7 +9,7 @@ use linear_regression::MyRustLinearRegression;
 use model_base::Mode;
 
 #[pymodule]
-fn Xmodels(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn Rmodels(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<MyRustKNN>()?;
     m.add_class::<MyRustLinearRegression>()?;
     m.add_class::<Mode>()?;

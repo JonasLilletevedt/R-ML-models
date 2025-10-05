@@ -1,6 +1,6 @@
-use ndarray::{Array1, Array2, ArrayBase, ArrayView2, Axis};
-use numpy::{IntoPyArray, PyArray1, PyArrayMethods, PyReadonlyArray2};
-use pyo3::exceptions::{PyTypeError, PyValueError};
+use ndarray::{Array1, Array2};
+use numpy::{IntoPyArray, PyArrayMethods, PyReadonlyArray2};
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 

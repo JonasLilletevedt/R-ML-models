@@ -1,10 +1,10 @@
 [package]
-name = "ml-from-scratch"
+name = "rmodel"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [lib]
-name = "Rmodels"
+name = "rust_core"
 crate-type = ["cdylib"]
 
 [dependencies]

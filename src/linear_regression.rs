@@ -35,7 +35,7 @@ impl MyRustLinearRegression {
         self.weights =
             Array1::<f64>::zeros(self.base.X.as_ref().expect("Model not fitted").ncols());
 
-        for i in 0..self.iterations {
+        for _ in 0..self.iterations {
             self.gradient_descent();
         }
         Ok(())

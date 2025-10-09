@@ -109,4 +109,43 @@ pub fn calculate_gini_index(
     (left_total / n) * g_left + (right_total / n) * g_right
 }
 
-pub fn calculate_mse() {}
+pub fn calculate_mse(
+    split_val: f64,
+    feat_index: usize,
+    X_train: &Array2<f64>,
+    y_train: &Array1<f64>,
+) -> f64 {
+    let feat = X_train.column(feat_index);
+    let n = feat.len();
+    let mask_left = feat.mapv(|v| if v <= split_val { 1.0 } else { 0.0 });
+    let mask_right = feat.mapv(|v| if v > split_val { 1.0 } else { 0.0 });
+
+    let n_left = mask_left.sum();
+    let n_right = n as f64 - n_left;
+
+    let left_mean = if n_left > 0.0 {
+        &y_train.dot(&mask_left) / n_left
+    } else {
+        0.0
+    };
+
+    let right_mean = if n_right > 0.0 {
+        &y_train.dot(&mask_right) / n_right
+    } else {
+        0.0
+    };
+
+    let mse = y_train
+        .indexed_iter()
+        .map(|(i, &val)| {
+            if mask_left[i] != 0.0 {
+                (val - left_mean).powi(2)
+            } else {
+                (val - right_mean).powi(2)
+            }
+        })
+        .sum::<f64>()
+        / n as f64;
+
+    mse
+}

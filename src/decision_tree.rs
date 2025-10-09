@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use core::f64;
 
 use ndarray::{Array1, Array2, ArrayView2, Axis};
 use numpy::{IntoPyArray, PyArrayMethods, PyReadonlyArray2};
@@ -31,8 +31,17 @@ impl MyRustDecisionTree {
             Some(X) => X,
             _ => {
                 return Err(PyValueError::new_err(
-                    "Error fitting train data [MyRustDecisionTree][fn fit()]",
+                    "Error fitting X_train data [MyRustDecisionTree][fn fit()]",
                 ));
+            }
+        };
+
+        let y_train = match &self.base.y {
+            Some(y) => y,
+            _ => {
+                return Err(PyValueError::new_err(
+                    "Error fitting y_train data [MyRustDecisionTree][fn fit()]",
+                ))
             }
         };
 
@@ -46,7 +55,14 @@ impl MyRustDecisionTree {
             })
             .collect();
 
-        Ok(todo!())
+        // Sudo code ---
+        // check all possible values in train for each feature to find best gini index, store current best row, col
+        // Add that question as first node, do that recursivley to set depth
+        // We also need to check on only what is left in that node after the previous question
+        let best_q = find_best_q(X_train, y_train_float, &self.base.mode);
+        
+        todo!()
+        }
     }
 
     fn predict(&mut self, py: Python, X_pred: PyReadonlyArray2<f64>) -> PyResult<Py<PyAny>> {
@@ -72,6 +88,39 @@ impl MyRustDecisionTree {
                 Ok(np_res.into())
             }
         }
+    }
+}
+
+pub fn find_best_q(
+    X_train: &Array2<f64>,
+    y_train: &Array1<f64>,
+    mode: ModelBase::Mode,
+) -> (usize, usize) {
+    let split_function = get_split_function(mode);
+    let rows = X_train.nrows();
+    let cols = X_train.ncols();
+
+    let mut best_q = (0, 0);
+    let mut best_loss = f64::INFINITY;
+
+    for row in 0..rows {
+        for col in 0..cols {
+            let split_val = *X_train[[row, col]];
+            let feat_index = col;
+            let loss = split_function(split_val, feat_index, &X_train, &y_train);
+            if loss < best_loss {
+                best_loss = loss;
+                best_q = (split_val, feat_index);
+            }
+        }
+    }
+    best_q
+}
+
+fn get_split_function(mode: ModelBase::Mode) -> fn(f64, usize, &Array2<f64>, &Array1<f64>) -> f64 {
+    match mode {
+        ModelBase::Mode::Classification => calculate_gini_index,
+        ModelBase::Mode::Regression => calculate_mse,
     }
 }
 

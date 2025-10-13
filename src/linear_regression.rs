@@ -1,10 +1,10 @@
 use ndarray::{Array1, Array2};
-use numpy::{IntoPyArray, PyArrayMethods, PyReadonlyArray2};
+use numpy::{IntoPyArray, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray2};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 
-use crate::model_base::{Labels, Mode, ModelBase};
+use crate::model_base::{Mode, ModelBase};
 
 #[pyclass]
 pub struct MyRustLinearRegression {
@@ -28,10 +28,9 @@ impl MyRustLinearRegression {
         }
     }
 
-    fn fit(&mut self, X: PyReadonlyArray2<f64>, y: &Bound<'_, PyAny>) -> PyResult<()> {
-        let labels = self.base.parse_and_validate(y)?;
+    fn fit(&mut self, X: PyReadonlyArray2<f64>, y: PyReadonlyArray1<f64>) -> PyResult<()> {
         self.base.X = Some(X.as_array().to_owned());
-        self.base.y = Some(labels);
+        self.base.y = Some(y.as_array().to_owned());
         self.weights =
             Array1::<f64>::zeros(self.base.X.as_ref().expect("Model not fitted").ncols());
 
@@ -43,7 +42,7 @@ impl MyRustLinearRegression {
 
     fn predict(&mut self, py: Python, X_pred: PyReadonlyArray2<f64>) -> PyResult<Py<PyAny>> {
         // Check if model have been fitted
-        let (X_train, y_train) = match (&self.base.X, &self.base.y) {
+        let (X_train, _y_train) = match (&self.base.X, &self.base.y) {
             (Some(X), Some(y)) => (X, y),
             _ => {
                 return Err(PyValueError::new_err(
@@ -52,18 +51,17 @@ impl MyRustLinearRegression {
             }
         };
 
-        match y_train {
-            Labels::Float(y_train_float) => {
-                let res: Array1<f64> = make_predictions(X_train, &self.weights, &self.bias);
+        let X_pred_view = X_pred.as_array().to_owned();
+
+        match self.base.mode {
+            Mode::Regression => {
+                let res: Array1<f64> = make_predictions(&X_pred_view, &self.weights, &self.bias);
                 let np_res = res.into_pyarray(py);
                 Ok(np_res.into())
             }
-            Labels::Int(y_train_int) => {
-                // For classification, implement voting logic here
-                let res: Array1<i64> = todo!();
-                let np_res = res.into_pyarray(py);
-                Ok(np_res.into())
-            }
+            Mode::Classification => Err(PyValueError::new_err(
+                "Classification mode is not implemented for linear regression",
+            )),
         }
     }
 }
@@ -81,16 +79,11 @@ impl MyRustLinearRegression {
             .as_ref()
             .expect("Code Error [fn gradient_descent] -- self.base.y could not unwrap_failed");
 
-        let y_train_float = match y_train {
-            Labels::Float(y) => y,
-            Labels::Int(_) => return,
-        };
-
         // predictions
         let predictions = make_predictions(X_train, &self.weights, &self.bias);
 
         // errors
-        let errors = &predictions - y_train_float;
+        let errors = &predictions - y_train;
 
         // gradients
         let weight_loss_derivatives = calculate_weight_loss_derivative(&errors, X_train);

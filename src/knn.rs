@@ -1,11 +1,9 @@
 use ndarray::{Array1, Array2, ArrayView2, Axis};
-use numpy::{IntoPyArray, PyArrayMethods, PyReadonlyArray2};
+use numpy::{IntoPyArray, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray2};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
-use std::collections::HashMap;
-
-use crate::model_base::{Labels, Mode, ModelBase};
+use crate::model_base::{Mode, ModelBase};
 
 #[pyclass]
 pub struct MyRustKNN {
@@ -23,10 +21,9 @@ impl MyRustKNN {
         }
     }
 
-    fn fit(&mut self, X: PyReadonlyArray2<f64>, y: &Bound<'_, PyAny>) -> PyResult<()> {
-        let labels = self.base.parse_and_validate(y)?;
+    fn fit(&mut self, X: PyReadonlyArray2<f64>, y: PyReadonlyArray1<f64>) -> PyResult<()> {
         self.base.X = Some(X.as_array().to_owned());
-        self.base.y = Some(labels);
+        self.base.y = Some(y.as_array().to_owned());
 
         Ok(())
     }
@@ -42,6 +39,19 @@ impl MyRustKNN {
             }
         };
 
+        let n_train = X_train.nrows();
+        if self.k == 0 {
+            return Err(PyValueError::new_err(
+                "k must be greater than 0 when performing predictions",
+            ));
+        }
+        if self.k > n_train {
+            return Err(PyValueError::new_err(format!(
+                "k ({}) cannot be greater than the number of training samples ({})",
+                self.k, n_train
+            )));
+        }
+
         let X_pred_view = X_pred.as_array();
 
         let distances = calculate_distances(X_pred_view, X_train.view());
@@ -55,7 +65,8 @@ impl MyRustKNN {
                 .map(|(idx, &val)| (val, idx))
                 .collect();
 
-            indexed_row.select_nth_unstable_by(self.k, |a: &(f64, usize), b: &(f64, usize)| {
+            let kth_index = self.k - 1;
+            indexed_row.select_nth_unstable_by(kth_index, |a: &(f64, usize), b: &(f64, usize)| {
                 a.0.partial_cmp(&b.0).unwrap()
             });
 
@@ -67,22 +78,27 @@ impl MyRustKNN {
                 .assign(&Array1::from(k_smallest_indices));
         }
 
-        match y_train {
-            Labels::Float(y_train_float) => {
-                let k_closest_results = pred_closest_rowi.mapv(|idx| y_train_float[idx]);
+        match self.base.mode {
+            Mode::Regression => {
+                let k_closest_results = pred_closest_rowi.mapv(|idx| y_train[idx]);
                 let row_means = k_closest_results.mean_axis(Axis(1)).unwrap();
                 let np_res = row_means.into_pyarray(py);
                 Ok(np_res.into())
             }
-            Labels::Int(y_train_int) => {
+            Mode::Classification => {
                 // For classification, implement voting logic here
-                let k_closest_results = pred_closest_rowi.mapv(|idx| y_train_int[idx]);
-                let mut preds = Array1::<i64>::zeros(k_closest_results.nrows());
+                let k_closest_results = pred_closest_rowi.mapv(|idx| y_train[idx]);
+                let mut preds = Array1::<f64>::zeros(k_closest_results.nrows());
                 for (i, row) in k_closest_results.rows().into_iter().enumerate() {
-                    let mut frequencies: HashMap<i64, i64> = HashMap::new();
+                    let mut frequencies: Vec<(f64, usize)> = Vec::new();
 
-                    for item in row.iter() {
-                        *frequencies.entry(item.clone()).or_insert(0) += 1;
+                    for &item in row.iter() {
+                        if let Some((_, count)) = frequencies.iter_mut().find(|(val, _)| *val == item)
+                        {
+                            *count += 1;
+                        } else {
+                            frequencies.push((item, 1));
+                        }
                     }
 
                     let row_mode = frequencies
@@ -93,7 +109,7 @@ impl MyRustKNN {
                     if let Some(mode) = row_mode {
                         preds[i] = mode;
                     } else {
-                        preds[i] = -1;
+                        preds[i] = -1.0;
                     }
                 }
                 let np_res = preds.into_pyarray(py);

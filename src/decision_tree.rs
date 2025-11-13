@@ -1,7 +1,8 @@
 use core::f64;
+use std::cmp::Ordering;
 
-use ndarray::{Array1, Array2, ArrayView2, Axis};
-use numpy::{IntoPyArray, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray2};
+use ndarray::{Array1, Array2};
+use numpy::{PyReadonlyArray1, PyReadonlyArray2};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
@@ -76,6 +77,8 @@ impl MyRustDecisionTree {
     }
 }
 
+// Currently we calculate mse or gini for all values, also identical ones
+// TODO: Only calculate mse or gini for unique values
 pub fn find_best_q(X_train: &Array2<f64>, y_train: &Array1<f64>, mode: Mode) -> (f64, usize) {
     let split_function = get_split_function(mode);
     let rows = X_train.nrows();
@@ -84,16 +87,10 @@ pub fn find_best_q(X_train: &Array2<f64>, y_train: &Array1<f64>, mode: Mode) -> 
     let mut best_q = (0.0, 0);
     let mut best_loss = f64::INFINITY;
 
-    for row in 0..rows {
-        for col in 0..cols {
-            let split_val = X_train[[row, col]];
-            let feat_index = col;
-            let loss = split_function(split_val, feat_index, &X_train, &y_train);
-            if loss < best_loss {
-                best_loss = loss;
-                best_q = (split_val, feat_index);
-            }
-        }
+    for feat_index in 0..cols {
+        let mut uniq_vals = X_train.column(feat_index).to_vec();
+        uniq_vals.sort_unstable_by(|a, b| a.total_cmp(b));
+        uniq_vals.dedup_by(|a, b| a.total_cmp(b) == Ordering::Equal);
     }
     best_q
 }
@@ -176,6 +173,5 @@ pub fn calculate_mse(
         })
         .sum::<f64>()
         / n as f64;
-
     mse
 }

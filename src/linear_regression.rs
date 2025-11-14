@@ -1,4 +1,4 @@
-use ndarray::{Array1, Array2};
+use ndarray::{Array, Array1, Array2};
 use numpy::{IntoPyArray, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray2};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -31,11 +31,19 @@ impl MyRustLinearRegression {
     fn fit(&mut self, X: PyReadonlyArray2<f64>, y: PyReadonlyArray1<f64>) -> PyResult<()> {
         self.base.X = Some(X.as_array().to_owned());
         self.base.y = Some(y.as_array().to_owned());
+
+        let X_train = self.base.X.as_ref().unwrap();
+        let n_features = X_train.ncols();
+
         self.weights =
             Array1::<f64>::zeros(self.base.X.as_ref().expect("Model not fitted").ncols());
 
+        let mut predictions = Array1::<f64>::zeros(X_train.nrows());
+        let mut errors = Array1::<f64>::zeros(X_train.nrows());
+        let mut grad = Array1::<f64>::zeros(n_features);
+
         for _ in 0..self.iterations {
-            self.gradient_descent();
+            self.gradient_descent(&mut predictions, &mut errors, &mut grad);
         }
         Ok(())
     }
@@ -67,30 +75,38 @@ impl MyRustLinearRegression {
 }
 
 impl MyRustLinearRegression {
-    fn gradient_descent(&mut self) {
-        let X_train = self
-            .base
-            .X
-            .as_ref()
-            .expect("Code Error [fn gradient_descent] -- self.base.X could not unwrap_failed");
-        let y_train = self
-            .base
-            .y
-            .as_ref()
-            .expect("Code Error [fn gradient_descent] -- self.base.y could not unwrap_failed");
+    fn gradient_descent(
+        &mut self,
+        predictions: &mut Array1<f64>,
+        errors: &mut Array1<f64>,
+        grad: &mut Array1<f64>,
+    ) {
+        let X_train = self.base.X.as_ref().unwrap();
+        let y_train = self.base.y.as_ref().unwrap();
+        let m = X_train.nrows() as f64;
 
         // predictions
-        let predictions = make_predictions(X_train, &self.weights, &self.bias);
+        *predictions = X_train.dot(&self.weights);
+        *predictions += self.bias;
 
         // errors
-        let errors = &predictions - y_train;
+        *errors = predictions.clone();
+        *errors -= y_train;
 
         // gradients
-        let weight_loss_derivatives = calculate_weight_loss_derivative(&errors, X_train);
+        grad.fill(0.0);
+        for (j, mut g_j) in grad.iter_mut().enumerate() {
+            let col = X_train.column(j);
+            *g_j = col.dot(errors) / m;
+        }
 
-        // update weights and bias
-        self.weights -= &(weight_loss_derivatives * self.learning_rate);
+        // weights -= learning_rate * grad
+        // unngå (grad * lr) som også lager ny array:
+        for (w, g) in self.weights.iter_mut().zip(grad.iter()) {
+            *w -= self.learning_rate * *g;
+        }
 
+        // bias -= mean(errors)
         let bias_derivative = errors.mean().unwrap();
         self.bias -= bias_derivative * self.learning_rate;
     }

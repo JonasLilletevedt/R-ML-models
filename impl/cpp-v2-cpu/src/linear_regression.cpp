@@ -20,7 +20,14 @@ std::vector<double> LinearRegression::predict(const std::vector<double> &X, cons
     return std::vector<double>();
 }
 
-void LinearRegression::gradient_descent_step(const std::vector<double> &X, const std::vector<double> &y, std::size_t n_samples, std::size_t n_features, std::vector<double> &preds, std::vector<double> &errors, std::vector<double> &grads)
+void LinearRegression::gradient_descent_step(
+    const std::vector<double> &X,
+    const std::vector<double> &y,
+    std::size_t n_samples,
+    std::size_t n_features,
+    std::vector<double> &preds,
+    std::vector<double> &errors,
+    std::vector<double> &grads)
 {
     const double *X_ptr = X.data();
     const double *y_ptr = y.data();
@@ -29,7 +36,7 @@ void LinearRegression::gradient_descent_step(const std::vector<double> &X, const
     double *e_ptr = errors.data();
     double *g_ptr = grads.data();
 
-// fake predictions
+// predictions: p = Xw + b
 #pragma omp parallel for
     for (std::size_t i = 0; i < n_samples; i++)
     {
@@ -37,26 +44,42 @@ void LinearRegression::gradient_descent_step(const std::vector<double> &X, const
         p_ptr[i] = dotRow(row_ptr, w_ptr, n_features) + bias_;
     }
 
-// errors
+// errors: e = p - y
 #pragma omp parallel for
     for (std::size_t i = 0; i < n_samples; i++)
     {
         e_ptr[i] = p_ptr[i] - y_ptr[i];
     }
 
-    // gradients
+    // gradients: g = X^T * e / n_samples
 
-    for (std::size_t i = 0; i < n_samples; i++)
+    // start from zero
+    std::fill(grads.begin(), grads.end(), 0.0);
+
+#pragma omp parallel
     {
-        for (std::size_t j = 0; j < n_features; j++)
+        std::vector<double> g_loc(n_features, 0.0);
+        double *g_loc_ptr = g_loc.data();
+
+#pragma omp for nowait schedule(static)
+        for (std::size_t i = 0; i < n_samples; i++)
         {
-            g_ptr[j] += e_ptr[i] * X_ptr[i * n_features + j];
+            for (std::size_t j = 0; j < n_features; j++)
+            {
+                g_loc_ptr[j] += X_ptr[i * n_features + j] * e_ptr[i];
+            }
+        }
+#pragma omp critical
+        {
+            for (std::size_t i = 0; i < n_features; i++)
+            {
+                g_ptr[i] += g_loc_ptr[i];
+            }
         }
     }
-
-    for (std::size_t j = 0; j < n_features; j++)
+    for (std::size_t i = 0; i < n_features; i++)
     {
-        g_ptr[j] /= n_samples;
+        g_ptr[i] = g_ptr[i] / n_samples;
     }
 }
 

@@ -105,36 +105,48 @@ Installation
 ------------------------------------------------------------
 
 1. Clone the repository:
-
+   ```bash
    git clone https://github.com/JonasLilletvedt/coreflux
    cd coreflux
+   ```
 
-2. Create a virtual environment (recommended):
-
+3. Create a virtual environment (recommended):
+   ```bash
    python3 -m venv .venv
    source .venv/bin/activate        # Linux/Mac
    .venv\Scripts\activate           # Windows
+   ```
 
-3. Install required packages:
+4. Install required packages:
 
+   ```bash
    pip install maturin numpy scikit-learn
+   ```
 
-4. Build Rust backend:
+6. Build Rust backend:
 
+   ```bash
    maturin develop --release
+   ```
 
-5. Build C++ backend:
+8. Build C++ backend:
 
+   ```bash
    cmake -S cpp -B cpp/build
    cmake --build cpp/build --config Release
+   ```
 
 Python usage:
 
+   ```python
    from coreflux_cpp import LinearRegression
    model = LinearRegression(iters=1000, lr=0.05)
+   ```
 
 If the shared library is in a custom path, set:
+   ```python
    export CPP_LINEAR_REGRESSION_LIB=/path/to/lib
+   ```
 
 ------------------------------------------------------------
 Detailed Algorithm Documentation

@@ -88,7 +88,7 @@ Model                                   | Mean Time (5 runs)
 --------------------------------------- | ------------------
 scikit-learn SGDRegressor (1000 iters)  | 2.05 s
 Rust Linear Regression                  | 18.17 s
-C++ Parallel GD (OpenMP)                | (included in updated notebooks)
+C++ Parallel GD (OpenMP)                | 1.05 s
 
 Notes:
 The Rust implementation is intentionally naive and does not use BLAS, SIMD, or parallelism.

@@ -106,7 +106,7 @@ Installation
 
 1. Clone the repository:
 
-   git clone https://github.com/JonasLilletevedt/coreflux
+   git clone https://github.com/JonasLilltevedt/coreflux
    cd coreflux
 
 2. Create a virtual environment (recommended):

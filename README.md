@@ -121,6 +121,33 @@ model.fit(X_train, y_train)
 pred = model.predict(X_test)
 ```
 
+### Python (C++ backend via ctypes)
+
+Build the shared library:
+
+```bash
+cmake -S impl/cpp-v2-cpu -B impl/cpp-v2-cpu/build
+cmake --build impl/cpp-v2-cpu/build --config Release
+```
+
+Then you can use the optimized C++ implementation from Python:
+
+```python
+from wrapper.cpp_linear_regression import LinearRegression as CppLinearRegression
+
+model = CppLinearRegression(iterations=1000, learning_rate=0.05)
+model.fit(X_train, y_train)
+pred = model.predict(X_test)
+```
+
+If the shared library is located somewhere else, set the `CPP_LINEAR_REGRESSION_LIB`
+environment variable to its absolute path.
+
+> **Note**  
+> Some sandboxed environments block OpenMP shared-memory allocations.
+> If you run into runtime errors mentioning `Can't open SHM2`, rebuild with
+> `-DLINEAR_REGRESSION_ENABLE_OPENMP=OFF` to switch to the single-threaded code path.
+
 ### Rust
 
 ```rust

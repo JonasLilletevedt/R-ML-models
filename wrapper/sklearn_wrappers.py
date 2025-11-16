@@ -4,6 +4,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 import rust_core
+from . import cpp_linear_regression
 
 
 # scikit-learn wrapper for knn
@@ -43,7 +44,7 @@ class KNNClassifier(BaseEstimator, ClassifierMixin):
 class LinearRegression(BaseEstimator, ClassifierMixin):
     def __init__(self, learning_rate=0.05, iterations=1000):
         self.learning_rate = learning_rate
-        self.iteration = iterations
+        self.iterations = iterations
 
     def fit(self, X, y):
         X, y = check_X_y(X, y)
@@ -68,3 +69,30 @@ class LinearRegression(BaseEstimator, ClassifierMixin):
         X = check_array(X)
 
         return self.rust_model_.predict(X)
+
+
+class CppLinearRegression(BaseEstimator, RegressorMixin):
+    """
+    scikit-learn compatible wrapper around the optimized C++ LinearRegression implementation.
+    """
+
+    def __init__(self, learning_rate=0.05, iterations=1000, library_path=None):
+        self.learning_rate = learning_rate
+        self.iterations = iterations
+        self.library_path = library_path
+
+    def fit(self, X, y):
+        X, y = check_X_y(X, y)
+        self._cpp_model = cpp_linear_regression.LinearRegression(
+            iterations=self.iterations,
+            learning_rate=self.learning_rate,
+            library_path=self.library_path,
+        )
+        self._cpp_model.fit(X, y)
+        self.is_fitted_ = True
+        return self
+
+    def predict(self, X):
+        check_is_fitted(self)
+        X = check_array(X)
+        return self._cpp_model.predict(X)

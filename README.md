@@ -1,219 +1,171 @@
-# Rmodels: Machine Learning Algorithms Built From Scratch
+# CoreFlux — High-Performance Machine Learning from Scratch (Rust → C++ → CUDA)
 
-Do you really understand an algorithm if you can’t build it yourself?
-Probably not — and this project is my way of learning machine learning from the ground up,
-by implementing core algorithms myself and validating them against scikit-learn.
+CoreFlux is a multi-backend machine learning engine built from the ground up.
+The goal is to understand machine learning algorithms deeply by implementing them manually,
+validate them against scikit-learn, and then optimize them for high performance.
 
-This project is part of a long-term goal:
-**Rust → C++ → CUDA → GPU-accelerated ML from scratch.**
+The project includes:
+- Rust implementations (correctness-first baseline)
+- C++ OpenMP implementations (performance-first CPU backend)
+- CUDA backend (planned for GPU acceleration)
 
----
+Everything is implemented from scratch: gradient descent, KNN, memory layouts, threading, and Python integration.
 
-# Project Goals
+------------------------------------------------------------
+Project Goals
+------------------------------------------------------------
 
-1. Understand ML algorithms deeply by implementing them entirely from scratch.
-2. Build a correct and reproducible baseline that numerically matches scikit-learn.
-3. Transition to high-performance computing by re-implementing models in:
-   - **C++ (v2 – optimized CPU implementation)**
-   - **CUDA (v3 – GPU execution)**
+1. Implement ML algorithms from first principles.
+2. Achieve numerical equivalence with scikit-learn.
+3. Optimize performance using:
+   - Raw pointers and cache-aware memory layouts
+   - OpenMP threading
+   - SIMD (planned)
+   - CUDA kernels (planned)
+4. Provide Python bindings for all backends.
 
-Rust is the correctness-first implementation.  
-C++/CUDA will be the performance-first implementations.
+------------------------------------------------------------
+Backends
+------------------------------------------------------------
 
----
+v1 — Rust (correctness-first)
+- Safe memory model
+- Clean, readable baseline implementations
+- Python bindings using PyO3
 
-# Why Rust (for v1)?
+v2 — C++ (performance-first)
+- Raw pointers with predictable memory layout
+- Parallel gradient descent using OpenMP
+- Python bindings via ctypes (pybind11 planned)
 
-Rust was chosen because:
+v3 — CUDA (planned)
+- GPU kernels for linear algebra
+- Parallel gradient descent on GPU
+- Benchmarks comparing CPU vs GPU vs scikit-learn
 
-- Memory safety without garbage collection
-- Performance close to C/C++
-- Easy Python integration via PyO3
+------------------------------------------------------------
+Algorithms Implemented
+------------------------------------------------------------
 
-This makes Rust ideal for a clean, correct, baseline implementation of ML algorithms.
+Linear Regression (Gradient Descent)
+- Rust baseline
+- C++ optimized version with OpenMP
+- Python wrappers for both backends
+- Detailed explanation in docs/LINEAR_REGRESSION.md
 
----
+K-Nearest Neighbors (Regression and Classification)
+- Rust implementation
+- Python bindings
+- Detailed explanation in docs/KNN.md
 
-# Features Implemented
+More algorithms will be ported to C++ and CUDA as the project evolves.
 
-- **Linear Regression (Gradient Descent)**
-- **K-Nearest Neighbors (Regression & Classification)**
-- **Python bindings** with PyO3
-- **Benchmark & validation notebooks** comparing Rust ↔ sklearn
+------------------------------------------------------------
+Project Structure
+------------------------------------------------------------
 
----
+coreflux/
+  rust/        Rust correctness baseline
+  cpp/         C++ optimized backend
+  cuda/        CUDA backend (planned)
+  python/      Python wrappers and build scripts
+  docs/        Algorithm explanations and derivations
+  notebooks/   Tests, validation, and benchmarks
 
-# Installation & Running Locally
-
-Below is the full workflow for cloning, building, and running the project.
-
-## 1. Clone the repository
-
-```bash
-git clone https://github.com/JonasLilletevedt/R-ML-models
-cd R-ML-models
-```
-
-## 2. Create a virtual environment (recommended)
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate  # macOS & Linux
-# OR
-.venv\Scripts\activate   # Windows
-```
-
-## 3. Install Python dependencies
-
-```bash
-pip install maturin numpy scikit-learn
-```
-
-## 4. Build and install Rust module (release mode)
-
-```bash
-maturin develop --release
-```
-
-This compiles the Rust code into a Python extension module (`rust_core`) and installs it in your environment.
-
-You can verify the installation with:
-
-```python
-import rust_core
-print(rust_core.__file__)
-```
-
-You should see something like:
-
-```
-.../site-packages/rust_core.cpython-312-darwin.so
-```
-
-## 5. Run the Jupyter notebooks
-
-```bash
-pip install jupyter
-jupyter notebook
-```
-
-Then open:
-
-- `notebooks/tests/test_linear_regression_functional.ipynb`
-- `notebooks/benchmarks/benchmark_linear_regression_speed.ipynb`
-
----
-
-# Example Usage
-
-### Python
-
-```python
-import rust_core
-
-model = rust_core.MyRustLinearRegression(
-    learning_rate=0.05,
-    iterations=1000,
-    mode=rust_core.Mode.Regression,
-)
-
-model.fit(X_train, y_train)
-pred = model.predict(X_test)
-```
-
-### Python (C++ backend via ctypes)
-
-Build the shared library:
-
-```bash
-cmake -S impl/cpp-v2-cpu -B impl/cpp-v2-cpu/build
-cmake --build impl/cpp-v2-cpu/build --config Release
-```
-
-Then you can use the optimized C++ implementation from Python:
-
-```python
-from wrapper.cpp_linear_regression import LinearRegression as CppLinearRegression
-
-model = CppLinearRegression(iterations=1000, learning_rate=0.05)
-model.fit(X_train, y_train)
-pred = model.predict(X_test)
-```
-
-If the shared library is located somewhere else, set the `CPP_LINEAR_REGRESSION_LIB`
-environment variable to its absolute path.
-
-> **Note**  
-> Some sandboxed environments block OpenMP shared-memory allocations.
-> If you run into runtime errors mentioning `Can't open SHM2`, rebuild with
-> `-DLINEAR_REGRESSION_ENABLE_OPENMP=OFF` to switch to the single-threaded code path.
-
-### Rust
-
-```rust
-use Rmodels::linear_regression::MyRustLinearRegression;
-
-let mut model = MyRustLinearRegression::new(1000, 0.05, Mode::Regression);
-model.fit(&X_train, &y_train);
-let pred = model.predict(&X_test);
-```
-
----
-
-# Benchmarks (current baseline)
+------------------------------------------------------------
+Benchmarking
+------------------------------------------------------------
 
 Dataset:
+- 200,000 training samples
+- 10,000 test samples
+- 40 features
+- 1000 gradient descent iterations
 
-- **200,000 training samples**
-- **10,000 test samples**
-- **40 features**
-- **1,000 gradient descent iterations**
+Baseline Comparison (CPU):
 
-### Results
+Model                                   | Mean Time (5 runs)
+--------------------------------------- | ------------------
+scikit-learn SGDRegressor (1000 iters)  | 2.05 s
+Rust Linear Regression                  | 18.17 s
+C++ Parallel GD (OpenMP)                | (included in updated notebooks)
 
-| Model                                   | Time (mean over 5 runs) |
-| --------------------------------------- | ----------------------- |
-| **sklearn.SGDRegressor (1000 iters)**   | **2.05 s**              |
-| **Rust Linear Regression (1000 iters)** | **18.17 s**             |
+Notes:
+The Rust implementation is intentionally naive and does not use BLAS, SIMD, or parallelism.
+The C++ version significantly reduces the gap through:
+- Thread-parallel gradient accumulation
+- Cache-friendly memory access patterns
+- Reduced branching
+- Tighter loop structures
 
-### Interpretation
+See notebooks/benchmarks for full results and commentary.
 
-`SGDRegressor` uses highly optimized C/Fortran BLAS routines.  
-The Rust version is a **naive educational implementation** without:
+------------------------------------------------------------
+Installation
+------------------------------------------------------------
 
-- SIMD
-- threading
-- BLAS
-- cache-level optimizations
+1. Clone the repository:
 
-A ~9× slowdown at this stage is entirely expected.
+   git clone https://github.com/JonasLilletevedt/coreflux
+   cd coreflux
 
-The benchmarking is used to understand scaling before moving to C++/CUDA.
+2. Create a virtual environment (recommended):
 
----
+   python3 -m venv .venv
+   source .venv/bin/activate        # Linux/Mac
+   .venv\Scripts\activate           # Windows
 
-# Roadmap
+3. Install required packages:
 
-### v1 — Rust (correctness baseline)
+   pip install maturin numpy scikit-learn
 
+4. Build Rust backend:
+
+   maturin develop --release
+
+5. Build C++ backend:
+
+   cmake -S cpp -B cpp/build
+   cmake --build cpp/build --config Release
+
+Python usage:
+
+   from coreflux_cpp import LinearRegression
+   model = LinearRegression(iters=1000, lr=0.05)
+
+If the shared library is in a custom path, set:
+   export CPP_LINEAR_REGRESSION_LIB=/path/to/lib
+
+------------------------------------------------------------
+Detailed Algorithm Documentation
+------------------------------------------------------------
+
+Linear Regression derivation:
+  docs/LINEAR_REGRESSION.md
+
+KNN explanation:
+  docs/KNN.md
+
+These documents include mathematical derivations, code explanations,
+and performance considerations.
+
+------------------------------------------------------------
+Roadmap
+------------------------------------------------------------
+
+v1 — Rust (Complete)
 - Linear Regression
 - KNN
 - Python bindings
-- Numerical equivalence with scikit-learn (**achieved**)
+- Validation against scikit-learn
 
-### v2 — C++ (optimized CPU)
+v2 — C++ (In Progress)
+- Parallelized Linear Regression
+- SIMD optimizations
+- pybind11 module
+- Additional models
 
-- Rewrite GD in C++
-- Add SIMD + multithreading
-- Aim to match or exceed sklearn SGD on CPU
-- **Note:** I’m a bit stupid and overly optimistic and actually think I can beat them here ;)
-
-### v3 — CUDA (GPU)
-
-- Implement GPU-accelerated matrix operations
-- GPU-based gradient descent
-- Compare CPU vs GPU scaling
-
----
-
-If you try the project and want to contribute, feel free to open issues or PRs! 🚀
+v3 — CUDA (Planned)
+- GPU kernels for LR
+- GPU matrix operations
+- CPU vs GPU vs sklearn benchmarks

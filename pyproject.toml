@@ -1,12 +1,23 @@
 [build-system]
-requires = ["maturin>=1.0"]
+requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "ml-from-scratch"
+name = "coreflux-rust"                                                        # navnet som vises på PyPI / pip
 version = "0.1.0"
 requires-python = ">=3.8"
+description = "CoreFlux Rust backend (PyO3 bindings for high-performance ML)"
+readme = "README.md"
+
+project.dependencies = ["numpy"]
 
 [tool.maturin]
+# Python-koden din ligger i src/, f.eks. src/coreflux_rust/__init__.py
 python-source = "src"
-bindings = "ml_from_scratch.rust_core"
+
+# Fortell maturin at dette er et PyO3-prosjekt
+bindings = "pyo3"
+
+# Navnet på Python-modulen som kompileres av Rust.
+# Hvis du vil importere den som `import coreflux_rust`, bruk:
+module-name = "coreflux_rust"

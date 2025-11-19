@@ -1,23 +1,23 @@
-#include "linear_regression.hpp"
+#include "linear_regression_v21.hpp"
 #include <stdexcept>
 
-LinearRegression::LinearRegression(std::size_t iterations, double learning_rate) : iterations_(iterations),
-                                                                                   learning_rate_(learning_rate),
-                                                                                   n_features_(0),
-                                                                                   weights_(),
-                                                                                   bias_(0.0),
-                                                                                   is_fitted_(false)
+LinearRegressionV21::LinearRegressionV21(std::size_t iterations, double learning_rate) : iterations_(iterations),
+                                                                                         learning_rate_(learning_rate),
+                                                                                         n_features_(0),
+                                                                                         weights_(),
+                                                                                         bias_(0.0),
+                                                                                         is_fitted_(false)
 {
 }
 
-void LinearRegression::fit(const std::vector<double> &X, const std::vector<double> &y, std::size_t n_samples, std::size_t n_features)
+void LinearRegressionV21::fit(const std::vector<double> &X, const std::vector<double> &y, std::size_t n_samples, std::size_t n_features)
 {
     // check shapes
     check_shapes_fit(X, y, n_samples, n_features);
 
-    LinearRegression::n_features_ = n_features;
-    LinearRegression::weights_.assign(n_features_, 0.0);
-    LinearRegression::bias_ = 0.0;
+    LinearRegressionV21::n_features_ = n_features;
+    LinearRegressionV21::weights_.assign(n_features_, 0.0);
+    LinearRegressionV21::bias_ = 0.0;
 
     std::vector<double> preds(n_samples, 0.0);
     std::vector<double> errors(n_samples, 0.0);
@@ -38,7 +38,7 @@ void LinearRegression::fit(const std::vector<double> &X, const std::vector<doubl
     is_fitted_ = true;
 }
 
-std::vector<double> LinearRegression::predict(const std::vector<double> &X, const std::size_t n_samples) const
+std::vector<double> LinearRegressionV21::predict(const std::vector<double> &X, const std::size_t n_samples) const
 {
     // Check fitted
     if (!is_fitted_)
@@ -56,7 +56,7 @@ std::vector<double> LinearRegression::predict(const std::vector<double> &X, cons
     return preds;
 }
 
-void LinearRegression::gradient_descent_step(
+void LinearRegressionV21::gradient_descent_step(
     const std::vector<double> &X,
     const std::vector<double> &y,
     std::size_t n_samples,
@@ -133,7 +133,7 @@ void LinearRegression::gradient_descent_step(
     bias_ -= learning_rate_ * bias_gradient;
 }
 
-void LinearRegression::calculate_predictions(const std::vector<double> &X, std::size_t n_samples, std::size_t n_features, std::vector<double> &preds) const
+void LinearRegressionV21::calculate_predictions(const std::vector<double> &X, std::size_t n_samples, std::size_t n_features, std::vector<double> &preds) const
 {
     const double *X_ptr = X.data();
     const double *w_ptr = weights_.data();
@@ -146,7 +146,7 @@ void LinearRegression::calculate_predictions(const std::vector<double> &X, std::
     }
 }
 
-double LinearRegression::dot_row(const double *a_ptr, const double *b_ptr, std::size_t n) const
+double LinearRegressionV21::dot_row(const double *a_ptr, const double *b_ptr, std::size_t n) const
 {
     double dotProduct(0.0);
 
@@ -158,7 +158,7 @@ double LinearRegression::dot_row(const double *a_ptr, const double *b_ptr, std::
     return dotProduct;
 }
 
-void LinearRegression::check_shapes_fit(const std::vector<double> &X, const std::vector<double> &y, std::size_t n_samples, std::size_t n_features) const
+void LinearRegressionV21::check_shapes_fit(const std::vector<double> &X, const std::vector<double> &y, std::size_t n_samples, std::size_t n_features) const
 {
     if (n_samples <= 0)
     {
@@ -178,7 +178,7 @@ void LinearRegression::check_shapes_fit(const std::vector<double> &X, const std:
     }
 }
 
-void LinearRegression::check_shapes_predict(const std::vector<double> &X, std::size_t n_samples, std::size_t n_features)
+void LinearRegressionV21::check_shapes_predict(const std::vector<double> &X, std::size_t n_samples, std::size_t n_features)
     const
 {
     if (n_samples <= 0)

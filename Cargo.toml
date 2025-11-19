@@ -1,10 +1,10 @@
 [package]
-name = "rmodel"
+name = "coreflux_rust"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "rust_core"
+name = "coreflux_rust"
 crate-type = ["cdylib"]
 
 [dependencies]

@@ -1,21 +1,21 @@
+use crate::model_base::{Mode, ModelBase};
 use ndarray::{Array1, Array2, ArrayView2, Axis};
 use numpy::{IntoPyArray, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray2};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
-use crate::model_base::{Mode, ModelBase};
 
 #[pyclass]
-pub struct MyRustKNN {
+pub struct KNN {
     k: usize,
     base: ModelBase,
 }
 
 #[pymethods]
-impl MyRustKNN {
+impl KNN {
     #[new]
     fn new(k: usize, mode: Mode) -> Self {
-        MyRustKNN {
+        KNN {
             k: (k),
             base: ModelBase::new(mode),
         }
@@ -93,7 +93,8 @@ impl MyRustKNN {
                     let mut frequencies: Vec<(f64, usize)> = Vec::new();
 
                     for &item in row.iter() {
-                        if let Some((_, count)) = frequencies.iter_mut().find(|(val, _)| *val == item)
+                        if let Some((_, count)) =
+                            frequencies.iter_mut().find(|(val, _)| *val == item)
                         {
                             *count += 1;
                         } else {

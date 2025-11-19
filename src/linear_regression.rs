@@ -7,7 +7,7 @@ use pyo3::types::PyAny;
 use crate::model_base::{Mode, ModelBase};
 
 #[pyclass]
-pub struct MyRustLinearRegression {
+pub struct LinearRegresssion {
     iterations: usize,
     learning_rate: f64,
     base: ModelBase,
@@ -16,10 +16,10 @@ pub struct MyRustLinearRegression {
 }
 
 #[pymethods]
-impl MyRustLinearRegression {
+impl LinearRegresssion {
     #[new]
     fn new(iterations: usize, learning_rate: f64, mode: Mode) -> Self {
-        MyRustLinearRegression {
+        LinearRegresssion {
             iterations: (iterations),
             learning_rate: (learning_rate),
             base: ModelBase::new(mode),
@@ -74,7 +74,7 @@ impl MyRustLinearRegression {
     }
 }
 
-impl MyRustLinearRegression {
+impl LinearRegresssion {
     fn gradient_descent(
         &mut self,
         predictions: &mut Array1<f64>,

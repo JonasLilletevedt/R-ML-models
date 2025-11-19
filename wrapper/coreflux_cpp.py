@@ -83,7 +83,9 @@ def _configure_prototypes(lib: ctypes.CDLL) -> None:
     lib.lr_last_error.restype = ctypes.c_char_p
 
 
-def _load_library(library_path: Optional[os.PathLike] = None) -> tuple[ctypes.CDLL, Path]:
+def _load_library(
+    library_path: Optional[os.PathLike] = None,
+) -> tuple[ctypes.CDLL, Path]:
     global _LIB, _LIB_PATH
 
     if library_path is None and _LIB is not None:
@@ -112,12 +114,17 @@ def _check_status(lib: ctypes.CDLL, status: int) -> None:
         raise RuntimeError(_last_error(lib))
 
 
-class LinearRegression:
+class LinearRegressionV21:
     """
-    Thin Python wrapper around the optimized C++ LinearRegression implementation.
+    Thin Python wrapper around the optimized C++ LinearRegressionV21 implementation.
     """
 
-    def __init__(self, iterations: int = 1000, learning_rate: float = 0.05, library_path: Optional[os.PathLike] = None) -> None:
+    def __init__(
+        self,
+        iterations: int = 1000,
+        learning_rate: float = 0.05,
+        library_path: Optional[os.PathLike] = None,
+    ) -> None:
         self._lib, self._lib_path = _load_library(library_path)
         self._handle = self._lib.lr_create(
             ctypes.c_size_t(iterations),
@@ -134,7 +141,7 @@ class LinearRegression:
             self._lib.lr_destroy(handle)
             self._handle = None
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "LinearRegression":
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "LinearRegressionV21":
         X_arr = np.ascontiguousarray(X, dtype=np.float64)
         y_arr = np.ascontiguousarray(y, dtype=np.float64)
         if X_arr.ndim != 2:

@@ -3,11 +3,11 @@
 #include <vector>
 #include <cstddef>
 
-class LinearRegression
+class LinearRegressionV21
 {
 public:
     // Constructor
-    LinearRegression(std::size_t iterations, double learning_rate);
+    LinearRegressionV21(std::size_t iterations, double learning_rate);
 
     // fit method
     void fit(

@@ -1,6 +1,6 @@
 #include "linear_regression_c_api.hpp"
 
-#include "linear_regression.hpp"
+#include "linear_regression_v21.hpp"
 
 #include <algorithm>
 #include <exception>
@@ -21,9 +21,9 @@ namespace
         g_last_error = message ? message : "Unknown error";
     }
 
-    LinearRegression *as_model(LinearRegressionHandle handle)
+    LinearRegressionV21 *as_model(LinearRegressionV21Handle handle)
     {
-        return reinterpret_cast<LinearRegression *>(handle);
+        return reinterpret_cast<LinearRegressionV21 *>(handle);
     }
 
     int handle_exception(const std::exception &ex)
@@ -41,13 +41,13 @@ namespace
 
 extern "C"
 {
-    LinearRegressionHandle lr_create(std::size_t iterations, double learning_rate)
+    LinearRegressionV21Handle lr_create(std::size_t iterations, double learning_rate)
     {
         try
         {
-            auto *model = new LinearRegression(iterations, learning_rate);
+            auto *model = new LinearRegressionV21(iterations, learning_rate);
             clear_error();
-            return reinterpret_cast<LinearRegressionHandle>(model);
+            return reinterpret_cast<LinearRegressionV21Handle>(model);
         }
         catch (const std::exception &ex)
         {
@@ -60,7 +60,7 @@ extern "C"
         return nullptr;
     }
 
-    void lr_destroy(LinearRegressionHandle handle)
+    void lr_destroy(LinearRegressionV21Handle handle)
     {
         if (!handle)
         {
@@ -71,7 +71,7 @@ extern "C"
     }
 
     int lr_fit(
-        LinearRegressionHandle handle,
+        LinearRegressionV21Handle handle,
         const double *X,
         const double *y,
         std::size_t n_samples,
@@ -108,7 +108,7 @@ extern "C"
     }
 
     int lr_predict(
-        LinearRegressionHandle handle,
+        LinearRegressionV21Handle handle,
         const double *X,
         std::size_t n_samples,
         std::size_t n_features,

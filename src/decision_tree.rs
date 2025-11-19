@@ -10,15 +10,15 @@ use pyo3::types::PyAny;
 use crate::model_base::{Mode, ModelBase};
 
 #[pyclass]
-pub struct MyRustDecisionTree {
+pub struct DecisionTree {
     base: ModelBase,
 }
 
 #[pymethods]
-impl MyRustDecisionTree {
+impl DecisionTree {
     #[new]
     fn new(k: usize, mode: Mode) -> Self {
-        MyRustDecisionTree {
+        DecisionTree {
             base: ModelBase::new(mode),
         }
     }

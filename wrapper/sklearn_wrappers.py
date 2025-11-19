@@ -3,8 +3,8 @@ from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.metrics import accuracy_score
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
-import rust_core
-from . import cpp_linear_regression
+import coreflux_rust
+from . import coreflux_cpp
 
 
 # scikit-learn wrapper for knn
@@ -17,7 +17,9 @@ class KNNClassifier(BaseEstimator, ClassifierMixin):
 
         self.classes_ = unique_labels(y)
 
-        self.rust_model_ = rust_core.MyRustKNN(k=self.k, mode=rust_core.Mode.Regression)
+        self.rust_model_ = coreflux_rust.MyRustKNN(
+            k=self.k, mode=coreflux_rust.Mode.Regression
+        )
         self.rust_model_.fit(X, y)
 
         self.is_fitted_ = True
@@ -51,10 +53,10 @@ class LinearRegression(BaseEstimator, ClassifierMixin):
 
         self.classes_ = unique_labels(y)
 
-        self.rust_model_ = rust_core.MyRustLinearRegression(
+        self.rust_model_ = coreflux_rust.MyRustLinearRegression(
             learning_rate=self.learning_rate,
             iterations=self.iterations,
-            mode=rust_core.Mode.Regression,
+            mode=coreflux_rust.Mode.Regression,
         )
 
         self.rust_model_.fit(X, y)
@@ -83,7 +85,7 @@ class CppLinearRegression(BaseEstimator, RegressorMixin):
 
     def fit(self, X, y):
         X, y = check_X_y(X, y)
-        self._cpp_model = cpp_linear_regression.LinearRegression(
+        self._cpp_model = coreflux_cpp.LinearRegression(
             iterations=self.iterations,
             learning_rate=self.learning_rate,
             library_path=self.library_path,

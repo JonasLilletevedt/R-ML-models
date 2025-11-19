@@ -5,16 +5,16 @@ pub mod knn;
 pub mod linear_regression;
 pub mod model_base;
 
-use decision_tree::MyRustDecisionTree;
-use knn::MyRustKNN;
-use linear_regression::MyRustLinearRegression;
+use decision_tree::DecisionTree;
+use knn::KNN;
+use linear_regression::LinearRegresssion;
 use model_base::Mode;
 
 #[pymodule]
-fn rust_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<MyRustKNN>()?;
-    m.add_class::<MyRustLinearRegression>()?;
-    m.add_class::<MyRustDecisionTree>()?;
+fn coreflux_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_class::<KNN>()?;
+    m.add_class::<LinearRegresssion>()?;
+    m.add_class::<DecisionTree>()?;
     m.add_class::<Mode>()?;
     Ok(())
 }

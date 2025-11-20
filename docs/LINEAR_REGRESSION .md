@@ -54,10 +54,11 @@ Let $e_i = \hat{y_i} - y_i$
 
 $\frac{\partial mse}{\partial w_j} =  \frac{\partial}{\partial w_j} \frac{1}{2n} \sum_{i=1}^n e_i^2 = \frac{1}{2n} \sum_{i=1}^n 2e_i \frac{\partial e_i}{\partial w_j} = \frac{1}{n} \sum_{i=1}^n e_i \frac{\partial e_i}{\partial w_j}$
 
-$\frac{\partial e_i}{\partial w_j}
+$$\frac{\partial e_i}{\partial w_j}
 = \frac{\partial}{\partial w_j}(\hat{y}_i - y_i)
 = \frac{\partial}{\partial w_j}(\vec{a_i} \cdot \vec{w} - y_i)
-= \frac{\partial}{\partial w_j}(a_{i1}w_1 + \dots + a_{ij}w_j + \dots + a_{in}w_n - y_i)$
+= \frac{\partial}{\partial w_j}(a_{i1}w_1 + \dots + a_{ij}w_j + \dots + a_{in}w_n - y_i)
+$$
 
 this simplifies simply to:
 

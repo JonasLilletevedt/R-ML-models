@@ -42,6 +42,7 @@ endif()
 
 add_library(linear_regression_cpp SHARED
     src/linear_regression_v21.cpp
+    src/linear_regression_v22.cpp
     src/linear_regression_c_api.cpp
 )
 

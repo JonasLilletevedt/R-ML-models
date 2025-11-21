@@ -275,7 +275,7 @@ Instead of modifying the existing implementation, the plan is to build a brand-n
 These are the main optimizations I’ll explore for the v22 CPU kernel:
 
 - **float32 instead of float64**  
-  Most ML datasets don’t need 64-bit precision. Switching to float32 cuts memory usage—and memory traffic—in half. If someone needs float64, we can expose a toggle.
+  Most ML datasets don’t need 64-bit precision. Switching to float32 cuts memory usage, and memory traffic—in half. If someone needs float64, we can expose a toggle.
 
 - **fused memory passes**  
   Currently, prediction, error computation, and gradient accumulation all scan the dataset separately. Fusing them into a single pass means touching `X` once per iteration instead of 2–3 times.

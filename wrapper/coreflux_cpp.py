@@ -55,6 +55,7 @@ def _resolve_library_path(explicit_path: Optional[os.PathLike] = None) -> Path:
 
 
 def _configure_prototypes(lib: ctypes.CDLL) -> None:
+    # V21 C API
     lib.lr_create.argtypes = [ctypes.c_size_t, ctypes.c_double]
     lib.lr_create.restype = ctypes.c_void_p
 
@@ -79,8 +80,34 @@ def _configure_prototypes(lib: ctypes.CDLL) -> None:
     ]
     lib.lr_predict.restype = ctypes.c_int
 
+    # Shared error accessor
     lib.lr_last_error.argtypes = []
     lib.lr_last_error.restype = ctypes.c_char_p
+
+    # V22 C API
+    lib.lr_v22_create.argtypes = [ctypes.c_size_t, ctypes.c_double]
+    lib.lr_v22_create.restype = ctypes.c_void_p
+
+    lib.lr_v22_destroy.argtypes = [ctypes.c_void_p]
+    lib.lr_v22_destroy.restype = None
+
+    lib.lr_v22_fit.argtypes = [
+        ctypes.c_void_p,
+        ctypes.POINTER(ctypes.c_double),
+        ctypes.POINTER(ctypes.c_double),
+        ctypes.c_size_t,
+        ctypes.c_size_t,
+    ]
+    lib.lr_v22_fit.restype = ctypes.c_int
+
+    lib.lr_v22_predict.argtypes = [
+        ctypes.c_void_p,
+        ctypes.POINTER(ctypes.c_double),
+        ctypes.c_size_t,
+        ctypes.c_size_t,
+        ctypes.POINTER(ctypes.c_double),
+    ]
+    lib.lr_v22_predict.restype = ctypes.c_int
 
 
 def _load_library(
@@ -144,10 +171,12 @@ class LinearRegressionV21:
     def fit(self, X: np.ndarray, y: np.ndarray) -> "LinearRegressionV21":
         X_arr = np.ascontiguousarray(X, dtype=np.float64)
         y_arr = np.ascontiguousarray(y, dtype=np.float64)
+
         if X_arr.ndim != 2:
             raise ValueError("X must be a 2D array")
         if y_arr.ndim != 1:
             raise ValueError("y must be a 1D array")
+
         n_samples, n_features = X_arr.shape
         status = self._lib.lr_fit(
             self._handle,
@@ -163,16 +192,105 @@ class LinearRegressionV21:
     def predict(self, X: np.ndarray) -> np.ndarray:
         if not hasattr(self, "_n_features"):
             raise RuntimeError("Model must be fitted before calling predict()")
+
         X_arr = np.ascontiguousarray(X, dtype=np.float64)
         if X_arr.ndim != 2:
             raise ValueError("X must be a 2D array")
+
         n_samples, n_features = X_arr.shape
         if n_features != self._n_features:
             raise ValueError(
                 f"Expected {self._n_features} features but received {n_features}"
             )
+
         out = np.empty(n_samples, dtype=np.float64)
         status = self._lib.lr_predict(
+            self._handle,
+            X_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            ctypes.c_size_t(n_samples),
+            ctypes.c_size_t(n_features),
+            out.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+        )
+        _check_status(self._lib, status)
+        return out
+
+    @property
+    def library_path(self) -> Optional[Path]:
+        return self._lib_path
+
+    @property
+    def iterations(self) -> int:
+        return self._iterations
+
+    @property
+    def learning_rate(self) -> float:
+        return self._learning_rate
+
+
+class LinearRegressionV22:
+    """
+    Thin Python wrapper around the optimized C++ LinearRegressionV22 implementation.
+    """
+
+    def __init__(
+        self,
+        iterations: int = 1000,
+        learning_rate: float = 0.05,
+        library_path: Optional[os.PathLike] = None,
+    ) -> None:
+        self._lib, self._lib_path = _load_library(library_path)
+        self._handle = self._lib.lr_v22_create(
+            ctypes.c_size_t(iterations),
+            ctypes.c_double(learning_rate),
+        )
+        if not self._handle:
+            raise RuntimeError(_last_error(self._lib))
+        self._iterations = iterations
+        self._learning_rate = learning_rate
+
+    def __del__(self) -> None:
+        handle = getattr(self, "_handle", None)
+        if handle:
+            self._lib.lr_v22_destroy(handle)
+            self._handle = None
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "LinearRegressionV22":
+        X_arr = np.ascontiguousarray(X, dtype=np.float64)
+        y_arr = np.ascontiguousarray(y, dtype=np.float64)
+
+        if X_arr.ndim != 2:
+            raise ValueError("X must be a 2D array")
+        if y_arr.ndim != 1:
+            raise ValueError("y must be a 1D array")
+
+        n_samples, n_features = X_arr.shape
+        status = self._lib.lr_v22_fit(
+            self._handle,
+            X_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            y_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            ctypes.c_size_t(n_samples),
+            ctypes.c_size_t(n_features),
+        )
+        _check_status(self._lib, status)
+        self._n_features = n_features
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        if not hasattr(self, "_n_features"):
+            raise RuntimeError("Model must be fitted before calling predict()")
+
+        X_arr = np.ascontiguousarray(X, dtype=np.float64)
+        if X_arr.ndim != 2:
+            raise ValueError("X must be a 2D array")
+
+        n_samples, n_features = X_arr.shape
+        if n_features != self._n_features:
+            raise ValueError(
+                f"Expected {self._n_features} features but received {n_features}"
+            )
+
+        out = np.empty(n_samples, dtype=np.float64)
+        status = self._lib.lr_v22_predict(
             self._handle,
             X_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             ctypes.c_size_t(n_samples),

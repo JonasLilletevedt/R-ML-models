@@ -7,7 +7,7 @@ CoreFlux includes several implementations of linear regression, each building on
 - A **future C++ CPU v22** version focused on memory-bandwidth optimizations.
 - (Later) a **CUDA GPU version** for extreme-scale workloads.
 
-This document walks through the math behind linear regression, the gradient descent algorithm, and how the different CoreFlux implementations perform — especially at large dataset sizes.
+This document walks through the math behind linear regression, the gradient descent algorithm, and how the different CoreFlux implementations perform, especially at large dataset sizes.
 
 ## 1. Problem Setup
 
@@ -37,7 +37,7 @@ There is a closed-form solution, but CoreFlux intentionally uses **gradient desc
 
 ## 3. Gradient Descent
 
-To find the best possible values for our parameters, we use gradient descent. Imagine the cost function as a steadily increasing curve on a 2D plane. If you wanted to minimize it, you would simply walk downhill along that curve. In practice, this means taking a step in the opposite direction of the tangent at your current point — or in higher dimensions, in the opposite direction of the gradient.
+To find the best possible values for our parameters, we use gradient descent. Imagine the cost function as a steadily increasing curve on a 2D plane. If you wanted to minimize it, you would simply walk downhill along that curve. In practice, this means taking a step in the opposite direction of the tangent at your current point, or in higher dimensions, in the opposite direction of the gradient.
 
 If this feels a bit abstract, try sketching it: draw any curve (it doesn’t need to be linear), pick a point on it, and draw the tangent line at that point. If you repeatedly move a small step in the opposite direction of the tangent, you’ll find yourself at a lower point each time.
 
